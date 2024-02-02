@@ -13,7 +13,7 @@ InfraZeus is a powerful tool designed to simplify the creation and management of
 Firstly, you need to clone the repository and install InfraZeus as a Python module:
 
 ```bash
-git clone https://github.com/your-repo/infrazeus.git
+git clone git@github.com:TeiaLabs/infrazeus.git
 cd infrazeus
 pip install .
 ```
