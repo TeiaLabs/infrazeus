@@ -1,0 +1,7 @@
+boto3
+ipykernel
+loguru
+pydantic
+python-dotenv
+rich
+typer

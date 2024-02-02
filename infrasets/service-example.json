@@ -1,0 +1,11 @@
+{
+    "service_name": "memetrics",
+    "environment": "beta",
+    "cluster": "allai-services",
+    "vpc": "vpc-0993f767989fabaa4",
+    "docker_tag": "beta",
+    "domain": "https://memetrics.allai.digital",
+    "port": 3000,
+    "protocol": "HTTPS",
+    "container_port": 80
+}
