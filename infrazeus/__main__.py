@@ -66,7 +66,7 @@ def ecs_create(
     alb_name: str = typer.Option(None, "--alb-name", "-a", help="Specify the ALB name"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Perform a dry run without applying changes"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
-    stack_suffix: str = typer.Option(None, "--stack-name-suffix", "-s", help="Suffix to concat to the auto stack name")
+    stack_suffix: str = typer.Option(None, "--stack-name-suffix", "-s", help="Suffix to concat to the auto stack name"),
 ):
     """
     Create ECS command.
@@ -180,7 +180,7 @@ app.add_typer(params_app, name="parameters")
 @params_app.command("create")
 def parameters_create(
     file: str = typer.Option(..., "--file", "-f", help="Path to the file"),
-    env: Path = typer.Option(..., "--env", "-e", help="Environment file. It has to be .json or .env files."),
+    env: Path = typer.Option(..., "--env", "-e", help="Environment file. It has to be a `.env` file."),
     secrets: list[str] = typer.Option(None, "--secrets", "-s", help="List of secret variables"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output")
 ):
@@ -211,7 +211,7 @@ def parameters_create(
         secret_return = create_secret(service=service, service_variables=secret_vars)
         if verbose:
             print(f"Secret return: {secret_return}")
-    
+
     if not_secret_vars:
         param_return = create_parameters(service=service, service_variables=not_secret_vars)
         if verbose:

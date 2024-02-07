@@ -1,3 +1,3 @@
-from . import get
+from . import list
 from . import create
 from . import templates

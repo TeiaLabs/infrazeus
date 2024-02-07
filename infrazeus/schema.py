@@ -77,9 +77,9 @@ class ALBService(Service):
 
 
 class ECSService(ALBService):
-    container_port: int = 80
-    memory: int = 512
-    cpu: int = 256
+    container_port: int
+    memory: int
+    cpu: int
 
     def stack_name(self, suffix: Optional[str]) -> str:
         name = f'{self.canonical_name}-ecs-stack'

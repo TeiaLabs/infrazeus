@@ -8,7 +8,7 @@ from rich import print
 from infrazeus.aws.helper import create_stack, list_stack
 
 from . import templates as t
-from .get import list_task_definition_by_name
+from .list import list_task_definition_by_name
 
 from ..alb.controller import get_alb_resources
 from ..alb.helper import get_load_balancer_subnet_ids
@@ -41,7 +41,7 @@ def main_create_ens(
 
     # Try to get alb resources from stack created by infrazeus
     else:
-        alb_stack_name = f'{service.service_name}-{service.environment}-alb-stack-001'
+        alb_stack_name = f'{service.service_name}-{service.environment}-alb-stack'
         alb_stack_outputs = cf_client.describe_stacks(StackName=alb_stack_name)
         print("alb stack out", alb_stack_outputs)
         alb_resources = alb_stack_outputs["Stacks"][0]["Outputs"]
@@ -77,6 +77,8 @@ def main_create_ens(
         security_group_ids=security_group_id,
         subnets=subnets,
         ecr_image_arn=ecr_path,
+        memory=service.memory,
+        cpu=service.cpu,
     )
 
     if build.value == ECSBuilds.TASK_DEFINITION.value:

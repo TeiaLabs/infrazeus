@@ -27,7 +27,7 @@ def load_env_to_dict(env_file_path: Path) -> dict[str, str]:
             if line and not line.startswith('#'):
                 try:
                     key, value = line.split('=', 1)
-                    env_vars[key] = value
+                    env_vars[key] = value.strip('"')
                 except ValueError:
                     print(f"Warning: Ignoring malformed line: {line}")
     return env_vars
