@@ -121,15 +121,22 @@ def alb_create(
     dry_run: bool = typer.Option(False, "--dry-run", help="Perform a dry run without applying changes"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output")
 ):
-    
+
     """
     Create ALB command.
     """
     service = ALBService.from_path(file)
-    subnets = subnet_ids_for_vpc(service.vpc, unique_availability_zones=True)
+    subnets = subnet_ids_for_vpc(
+        service.vpc, unique_availability_zones=True
+    )
 
     print(f"Create ALB: {service.alb_name} for service: {service}")
-    
+    print(f"Subnets available: {subnets}")
+
+    if not subnets or len(subnets) < 2:
+        print("ALB requires at least 2 subnets in different availability zones for VPC:", service.vpc)
+        raise typer.Exit(code=1)
+
     response = create_alb(
         dry_run=dry_run,
         subnets=subnets,
@@ -192,7 +199,7 @@ def parameters_create(
 
     print(f"Parameters create with file: {file}, env: {env} and secrets: {secrets}")
 
-    service = Service.from_path(file)
+    service = ECSService.from_path(file)
     evn_vars = load_env_to_dict(env)
 
     if not secrets or secrets is None:
@@ -206,6 +213,15 @@ def parameters_create(
     if verbose:
         print(f"Storing secrets: {secret_vars.keys()}")
         print(f"Storing non-secrets: {not_secret_vars.keys()}")
+
+    all_var_values = {**secret_vars, **not_secret_vars}
+
+    if not any([
+        str(service.container_port) in f"{x}" 
+        for x in all_var_values.values()
+    ]):
+        print(f"Container port: {service.container_port} not found in any environment variables. Please add it to the `.env` file.")
+        raise typer.Exit(code=1)
 
     if secret_vars:
         secret_return = create_secret(service=service, service_variables=secret_vars)
@@ -238,6 +254,39 @@ def parameters_list(
 
     print(f"Parameters: {param_keys}")
     print(f"Secrets: {secret_keys}")
+
+
+workflow_app = typer.Typer()
+app.add_typer(workflow_app, name="workflow")
+
+@workflow_app.command("create")
+def workflow_create(
+    file: str = typer.Option(..., "--file", "-f", help="Path to the file"),
+    workflow_file: Path = typer.Option(..., "--workflow_file", "-w", help="Path to the github workflow file"),
+    output_file: Path = typer.Option(None, "--output_file", "-o", help="Path that the new file will be stored"),
+    org: str = typer.Option(..., "--org", "-o", help="Org prefixed in the AWS var name (e.g., `OSF` for `OSF_AWS_SECRET_ACCESS_KEY`"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Perform a dry run without applying changes"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output")
+):
+    
+    """
+    Create ALB command.
+    """
+    from .workflow.controller import update_github_action_workflow
+    service = ECSService.from_path(file)
+
+    if not output_file:
+        # add org to the workflow_file name as fileprefix
+        output_file = Path(workflow_file.parent / f"{org}_{workflow_file.name}")
+
+    ret = update_github_action_workflow(
+        org=org, service=service, 
+        input_file_name=workflow_file, 
+        output_file_name=output_file, 
+        # dry_run=dry_run, 
+        # verbose=verbose,
+    )
+    print(ret)
 
 
 if __name__ == "__main__":

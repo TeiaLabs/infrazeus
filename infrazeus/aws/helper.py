@@ -1,6 +1,8 @@
 from typing import Any
 import boto3
 
+import boto3
+from typing import List
 
 def list_subnets(
     ec2_client,
@@ -8,55 +10,56 @@ def list_subnets(
     filter_available: bool = True,
     unique_availability_zones: bool = True,
     filter_public_subnets: bool = True
-):
-    # Describe subnets
-    subnets = ec2_client.describe_subnets(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}]) if vpc_id else ec2_client.describe_subnets()
-    
-    if "Subnets" in subnets:
-        filtered_subnets = []
-        seen_azs = set()
+) -> List[dict]:
+    # Describe subnets for the VPC, list all first
+    subnets = ec2_client.describe_subnets(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])['Subnets']
 
-        # Describe route tables to check for public subnets
-        route_tables = ec2_client.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}]) if vpc_id else ec2_client.describe_route_tables()
+    # Describe route tables for the VPC
+    route_tables = ec2_client.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])['RouteTables']
 
-        # Create a set of subnet IDs that are associated with a route to an Internet Gateway
-        public_subnet_ids = set()
-        for rt in route_tables['RouteTables']:
+    # Find public subnets if required
+    public_subnet_ids = set()
+    if filter_public_subnets:
+        for rt in route_tables:
             for r in rt['Routes']:
                 if r.get('GatewayId', '').startswith('igw-') and r.get('DestinationCidrBlock') == '0.0.0.0/0':
                     for assoc in rt.get('Associations', []):
                         if assoc.get('SubnetId'):
                             public_subnet_ids.add(assoc['SubnetId'])
 
-        for subnet in subnets['Subnets']:
-            # Filter out subnets that are not available if requested
-            if filter_available and subnet['State'] != 'available':
-                continue
+    filtered_subnets = []
+    seen_azs = set()
+    for subnet in subnets:
+        # Filter subnets based on the specified conditions
+        if ((filter_available and subnet['State'] != 'available') or
+            (unique_availability_zones and subnet['AvailabilityZone'] in seen_azs) or
+            (filter_public_subnets and subnet['SubnetId'] not in public_subnet_ids)):
+            continue
 
-            # Skip subnets from already seen availability zones if unique_availability_zones is True
-            if unique_availability_zones and subnet['AvailabilityZone'] in seen_azs:
-                continue
+        # The subnet satisfies all the filters, so we include it in the result
+        filtered_subnets.append(subnet)
+        # Keep track of seen availability zones
+        seen_azs.add(subnet['AvailabilityZone'])
 
-            # If filtering public subnets, skip subnets that are not in the public_subnet_ids set
-            if filter_public_subnets and subnet['SubnetId'] not in public_subnet_ids:
-                continue
-
-            # The subnet passes the filters, add to result
-            filtered_subnets.append(subnet)
-            seen_azs.add(subnet['AvailabilityZone'])
-
-        subnets = filtered_subnets
-
-    return subnets
+    return filtered_subnets
 
 
-def subnet_ids_for_vpc(vpc: str, unique_availability_zones=False) -> list[str]:
+def subnet_ids_for_vpc(vpc: str, unique_availability_zones=False, minimal_ip_available: int = 8, num_subnets: int = 3) -> List[str]:
+    # Get a list of subnets with their details
+    ec2_client = boto3.client('ec2')
     subnets = list_subnets(
-        boto3.client('ec2'), vpc, 
+        ec2_client, vpc,
         unique_availability_zones=unique_availability_zones
     )
-    subnets = [subnet["SubnetId"] for subnet in subnets]
-    return subnets
+
+    # Filter subnets with at least minimal_ip_available addresses left and choose up to 3
+    qualified_subnets = [
+        subnet["SubnetId"]
+        for subnet in subnets
+        if subnet["AvailableIpAddressCount"] >= minimal_ip_available
+    ]
+    
+    return qualified_subnets[:num_subnets]  # Return a maximum of 3 subnets
 
 
 def list_certificates(search_string, region: str = "us-east-1"):

@@ -67,8 +67,7 @@ def reuse_alb(
     logger.debug(f"All cert: {cert}")
 
     cert_arn = cert[0]["CertificateArn"]
-    logger.debug(f"Selected cert: {cert}")    
-
+    logger.info(f"Selected cert: {cert}")
     
     provided_alb_name = alb_name
     logger.debug(f"ALB name: {provided_alb_name}")
@@ -78,6 +77,7 @@ def reuse_alb(
     logger.debug(f"SG: {sg}")
     tg = t.get_target_group_template(service)
     logger.debug(f"TG: {tg}")
+
     listen = t.get_listener_template(
         alb_arn=alb_arn,
         certificate_arn=cert_arn,
@@ -121,8 +121,8 @@ def create_alb(
     cert = list_certificates(domain)
 
     cert_arn = cert[0]["CertificateArn"]
-    # logger.debug(f"Selected cert: {cert}")
-    
+    logger.info(f"Selected SSL certificate: {cert}")
+
     # Get the ARN of the ALB
     provided_alb_name = service.alb_name
     alb_template = t.get_alb_template(
