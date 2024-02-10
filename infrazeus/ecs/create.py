@@ -42,8 +42,18 @@ def main_create_ens(
     # Try to get alb resources from stack created by infrazeus
     else:
         alb_stack_name = f'{service.service_name}-{service.environment}-alb-stack'
-        alb_stack_outputs = cf_client.describe_stacks(StackName=alb_stack_name)
-        print("alb stack out", alb_stack_outputs)
+        try:
+            alb_stack_outputs = cf_client.describe_stacks(StackName=alb_stack_name)
+        except cf_client.exceptions.ClientError:
+            logger.error((
+                f"Could not find stack: {alb_stack_name}. "
+                "Make sure you created the ALB via infrazeus, "
+                "or reuse an existing one by informing `--alb_name`"
+            ))
+            exit(1)
+        if verbose:
+            print("ALB stack outputs:", alb_stack_outputs)
+
         alb_resources = alb_stack_outputs["Stacks"][0]["Outputs"]
         alb_resources = {output["OutputKey"]: output["OutputValue"] for output in alb_resources}
         alb_name = service.alb_name
@@ -65,9 +75,10 @@ def main_create_ens(
     logger.debug(f"Security Group ID: {security_group_id}")
     logger.debug(f"Load Balancer ARN: {load_balancer_arn}")
 
-    print(target_group_arn)
-    print(security_group_id)
-    print(load_balancer_arn)
+    if verbose:
+        print(target_group_arn)
+        print(security_group_id)
+        print(load_balancer_arn)
 
     cf_client = boto3.client('cloudformation')
     
@@ -81,14 +92,23 @@ def main_create_ens(
         cpu=service.cpu,
     )
 
+    task_parameters = list_parameters(service)
+    task_secrets = list_secrets(service)
+
+    if not task_parameters:
+            logger.warning("No parameters found for this service")
+    if not task_secrets:
+            logger.warning("No secrets found for this service")
+
     if build.value == ECSBuilds.TASK_DEFINITION.value:
         task_definition_template = t.get_task_definition_template(
             service=service, 
-            parameters=list_parameters(service),
-            secrets=list_secrets(service)
+            parameters=task_parameters,
+            secrets=task_secrets,
         )
-        template_head.update(task_definition_template["Resources"])
         logger.info(template_head)
+        template_head["Resources"] = task_definition_template["Resources"]
+        template_head["Outputs"] = task_definition_template["Outputs"]
 
     elif build.value == ECSBuilds.ECS.value:
         task_definition_arn = list_task_definition_by_name(service.canonical_name)
@@ -106,8 +126,8 @@ def main_create_ens(
     elif build.value == ECSBuilds.BOTH.value:
         task_definition_template = t.get_task_definition_template(
             service=service, 
-            parameters=list_parameters(service),
-            secrets=list_secrets(service)
+            parameters=task_parameters,
+            secrets=task_secrets,
         )
         template_head["Resources"] = task_definition_template["Resources"]
         template_head["Resources"].update(t.ECS_TEMPLATE["Resources"])
@@ -118,7 +138,7 @@ def main_create_ens(
     else:
         raise ValueError(f"Invalid build type: {build}")
 
-    print("\nCloudform template:")    
+    print("\nCloudform template:")
     print(template_head)
 
     if dry_run:
@@ -128,9 +148,3 @@ def main_create_ens(
         stack_name=service.stack_name(suffix=stack_sufix),
         template=template_head,  
     )
-
-
-# def create_ecs(service: ECSService):    
-#     sts_client = boto3.client('sts')
-#     account_id = sts_client.get_caller_identity()["Account"]
-#     logger.info(f"Using account: {account_id}")
