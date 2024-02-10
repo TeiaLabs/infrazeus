@@ -28,13 +28,13 @@ def create_secret(service: Service, service_variables: Dict[str, str]) -> Option
         # Create the secret
         response = client.create_secret(
             Name=secret_name,
-            Description=f"Secret for {service.normalized_name} in {service.environment} environment [imported from .env with infrazeus].",
+            Description=f"Secrets for {service.normalized_name} in {service.environment} environment [imported from .env with infrazeus].",
             SecretString=secret_string
         )
         return response
     except client.exceptions.ResourceExistsException:
         response = client.update_secret(
-            Description=f"Secret for {service.normalized_name} in {service.environment} environment (imported from .env with infrazeus)",
+            Description=f"Secrets for {service.normalized_name} in {service.environment} environment (imported from .env with infrazeus)",
             SecretId=secret_name,
             SecretString=secret_string
         )

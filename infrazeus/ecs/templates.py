@@ -142,17 +142,7 @@ def get_task_definition_template(
         }
     }
 
-
     return task_definition_template
-
-
-def is_number(variable: Any):
-    try:
-        float(variable)
-        return True
-    except ValueError:
-        pass
-    return False
 
 
 ECS_TEMPLATE = {

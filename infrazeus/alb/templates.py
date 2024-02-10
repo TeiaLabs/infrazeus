@@ -35,7 +35,7 @@ def get_security_group_template(service: ALBService):
                     'GroupDescription': f'ALB security group for {service.sg_name}',
                     'SecurityGroupIngress': [
                         {'IpProtocol': 'tcp', 'FromPort': 80, 'ToPort': 80, 'CidrIp': '0.0.0.0/0'},
-                        {'IpProtocol': 'tcp', 'FromPort': service.port, 'ToPort': service.port, 'CidrIp': '0.0.0.0/0'},
+                        {'IpProtocol': 'tcp', 'FromPort': service.port, 'ToPort': service.container_port, 'CidrIp': '0.0.0.0/0'},
                         {'IpProtocol': 'tcp', 'FromPort': 443, 'ToPort': 443, 'CidrIp': '0.0.0.0/0'}
                     ],
                     'VpcId': service.vpc,

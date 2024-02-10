@@ -206,8 +206,14 @@ def parameters_create(
         secret_vars = detect_secrets_with_ai(evn_vars)
         print(f"Auto secrets: {secret_vars}")
     else:
-        secret_vars = {secret: f"{evn_vars[secret]}" for secret in secrets if secret in secrets}
-    
+        secret_vars = {
+            secret: f"{evn_vars[secret]}" 
+            for secret in secrets if secret in evn_vars
+        }
+        missing_secrets = set(secrets) - set(secret_vars)
+        if missing_secrets:
+            logger.warning(f"Secrets informed not found in env vars: {missing_secrets}")
+
     not_secret_vars = {var: evn_vars[var] for var in evn_vars if var not in secret_vars}
 
     if verbose:
@@ -269,6 +275,8 @@ def workflow_create(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output")
 ):
     
+    print("This option is not implemented yet. Sorry :(")
+    exit(1)
     """
     Create ALB command.
     """
