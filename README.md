@@ -27,7 +27,7 @@ pip install .
 
 ### TLDR
 
-Create a json file with the following structure, lets save this in `infrasets/my-service.beta.json`:
+Create a json file (e.g., `infrasets/my-service.beta.json`) with the following structure,:
 
 ```json
 {
@@ -45,7 +45,7 @@ Create a json file with the following structure, lets save this in `infrasets/my
 }
 ```
 
-Create a .env file with all the variables for deploy (e.g., `infrasets/my-service.beta.env`):
+Create a .env file with all the variables the task will use when deployed (e.g., `infrasets/my-service.beta.env`):
 
 ```bash
 PORT=80
