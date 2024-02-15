@@ -6,11 +6,17 @@ In this repo you will find the foundation scripts for divine cloud structures wi
 
 ## Getting Started
 
-InfraZeus is a powerful tool designed to simplify the creation and management of your AWS infrastructure for deploying applications. It supports operations such as creating Elastic Container Registry (ECR) repositories, Elastic Load Balancers (ALB), and Elastic Container Service (ECS) tasks. Follow the instructions below to get started with InfraZeus.
+InfraZeus is a powerful tool designed to simplify the creation and management of your AWS infrastructure for deploying applications. 
+
+It supports: 
+- Creating Elastic Container Registry (ECR) repositories.
+- Elastic Load Balancers (ALB).
+- Parameters to parameter store and secret manager.
+- Elastic Container Service (ECS) tasks.
 
 ### Set Up InfraZeus
 
-Firstly, you need to clone the repository and install InfraZeus as a Python module:
+Install Infrazeus:
 
 ```bash
 git clone git@github.com:TeiaLabs/infrazeus.git
@@ -18,7 +24,58 @@ cd infrazeus
 pip install .
 ```
 
-### Basic Usage
+
+### TLDR
+
+Create a json file with the following structure, lets save this in `infrasets/my-service.beta.json`:
+
+```json
+{
+    "service_name": "plugins-api",
+    "environment": "beta",
+    "cluster": "allai-staging-services",
+    "vpc": "vpc-0b4e5e8706197dec7",
+    "docker_tag": "beta",
+    "domain": "https://plugins.beta.allai.digital",
+    "port": 443,
+    "protocol": "HTTPS",
+    "container_port": 5000,
+    "cpu": 256,
+    "memory": 2048
+}
+```
+
+Create a .env file with all the variables for deploy (e.g., `infrasets/my-service.beta.env`):
+
+```bash
+PORT=80
+RELOAD=True
+SECRET_KEY=12345
+...
+```
+
+Then run:
+
+```bash
+# Create the ECR repository
+python -m infrazeus ecr create --file infrasets/my-service-api.beta.json
+
+# ... run the github actions to build and push the docker image ...
+
+# Create the Load balancer
+python -m infrazeus alb create --file infrasets/my-service-api.beta.json
+
+# Store parameters for the task
+python -m infrazeus parameters create --file infrasets/my-service-api.beta.json --env infrasets/my-service-api.beta.env --secrets SECRET_KEY
+
+# Create the ECS task
+python -m infrazeus ecs create --file infrasets/my-service-api.beta.json
+```
+
+That's all. You can follow what's happening on the CloudFormation console.
+
+
+## A more complete documentation
 
 Use the InfraZeus tool by running it as a Python module with the following syntax:
 
@@ -61,7 +118,15 @@ python -m infrazeus ecr create --file infrasets/service-example.json
 
 After creation, push the Docker image to this repository, typically using GitHub Actions or your preferred CI/CD pipeline.
 
-**Step 2: Manage Application Environment Variables**
+**Step 2: Create your Application Load Balancer**
+
+To create a complete load balancer with target group, security group, and listeners with the SSL certificate run:
+
+```bash
+python -m infrazeus alb create --file infrasets/service-example.json 
+```
+
+**Step 3: Manage Application Environment Variables**
 
 Upload your application environment variables to the AWS Systems Manager Parameter Store and AWS Secrets Manager:
 
@@ -71,7 +136,7 @@ python -m infrazeus parameters create --file infrasets/service-example.json --en
 
 Specify your secret keys with the `--secrets` option.
 
-**Step 3: Set Up Load Balancers and ECS Task**
+**Step 4: Set Up Load Balancers and ECS Task**
 
 Create the necessary Application Load Balancers (ALB) and an ECS task definition:
 
