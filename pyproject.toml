@@ -16,6 +16,16 @@ line-length = 88
 
 [tool.isort]
 profile = "black"
+line_length = 88
+
+[tool.pylint]
+disable = [
+    "C0114",  # Missing module docstring
+    "C0116",  # Missing function or method docstring
+    "C0115", # Missing class module docstring
+    "R0903",  # Too few public methods
+    "W0311",  # Bad indentation (conflict with black)
+]
 
 [project]
 name = "infrazeus"
@@ -41,6 +51,7 @@ dependencies = [
 dev = [
     "black~=24.4",
     "isort~=5.13",
+    "pylint~=3.2"
 ]
 
 [project.scripts]

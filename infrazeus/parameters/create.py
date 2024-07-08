@@ -16,7 +16,7 @@ def detect_secrets_with_ai(service_variables: dict[str, str]):
     return secret_dict
 
 
-#%%
+# %%
 def create_secret(
     service: Service, service_variables: Dict[str, str]
 ) -> Optional[dict[str, Any]]:

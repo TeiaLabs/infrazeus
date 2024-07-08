@@ -1,13 +1,13 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import boto3
+import rich
 from loguru import logger
-from rich import print
 
 from ..schema import Service
 
 
-def create_ecr(service: Service) -> Optional[dict[str, Any]]:
+def create_ecr(service: Service) -> dict[str, Any] | None:
     ecr_client = boto3.client("ecr", region_name=service.region)
 
     logger.info(f"Creating ECR repo named: {service.canonical_name}")
@@ -15,9 +15,9 @@ def create_ecr(service: Service) -> Optional[dict[str, Any]]:
         response = ecr_client.create_repository(repositoryName=service.canonical_name)
         return response
     except ecr_client.exceptions.RepositoryAlreadyExistsException:
-        print(f"Repository {service.canonical_name} already exists.")
+        rich.print(f"Repository {service.canonical_name} already exists.")
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        rich.print(f"An error occurred: {str(e)}")
 
 
 def list_ecr(

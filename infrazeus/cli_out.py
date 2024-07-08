@@ -1,4 +1,4 @@
-from rich import print
+import rich
 from rich.console import Console
 
 console = Console()
@@ -14,11 +14,11 @@ def print_stack_outputs(stack_output: dict[str, list], verbose: bool = False):
     for stack in stack_output.get("Stacks", []):
         if verbose:
             for key, value in stack.items():
-                print(f"{key}: {value}")
+                rich.print(f"{key}: {value}")
             continue
 
         for key in non_verbose_keys:
-            print(f"{key}: {stack.get(key)}")
+            rich.print(f"{key}: {stack.get(key)}")
 
 
 def lightning_decorator(n=1):

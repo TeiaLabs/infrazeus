@@ -1,22 +1,26 @@
 from pathlib import Path
 
+import rich
 import typer
 from loguru import logger
-from rich import print
 
 from .alb.controller import create_alb, reuse_alb
 from .aws.helper import list_stack, subnet_ids_for_vpc
 from .cli_out import lightning_decorator, print_stack_outputs
 from .ecr.controller import create_ecr, list_ecr
+from .ecs import create
 from .ecs.create import ECSBuilds
+from .parameters.create import create_parameters, create_secret, detect_secrets_with_ai
+from .parameters.env_handler import load_env_to_dict
+from .parameters.list import list_parameters, list_secrets
 from .schema import ALBService, ECSService, Service
 
 logger.level("INFO")
 
-# Apply the decorator to the print method of the rich console
-print = lightning_decorator(n=1)(print)
+# Apply the decorator to the rich.print method of the rich console
+rich.print = lightning_decorator(n=1)(rich.print)
 
-print("Welcome to Infrazeus!")
+rich.print("Welcome to Infrazeus!")
 
 app = typer.Typer()
 
@@ -29,7 +33,7 @@ def ecr_create(file: str = typer.Option(..., "--file", "-f", help="Path to the f
     """
     Create an ECR repository from a file specification.
     """
-    print(f"ECR create with file: {file}")
+    rich.print(f"ECR create with file: {file}")
     service = Service.from_path(file)
     create_ecr(service)  # Assuming create_ecr is defined elsewhere
 
@@ -47,13 +51,13 @@ def ecr_list(
     repos = []
     if file:
         service = Service.from_path(file)
-        print(f"Listing ECR repositories for {service.ecr_name}")
+        rich.print(f"Listing ECR repositories for {service.ecr_name}")
         repos = list_ecr(name_equals=service.ecr_name)
     if name_contains:
-        print(f"Listing ECR repos for names that contain: {name_contains}")
+        rich.print(f"Listing ECR repos for names that contain: {name_contains}")
         repos = list_ecr(name_contains=name_contains)
 
-    print("Repos found:", repos)
+    rich.print("Repos found:", repos)
 
 
 ecs_app = typer.Typer()
@@ -81,11 +85,10 @@ def ecs_create(
     """
     Create ECS command.
     """
-    from .ecs import create
 
     service = ECSService.from_path(file)
-    print(service)
-    print(build)
+    rich.print(service)
+    rich.print(build)
     create.main_create_ens(
         service=service,
         alb_name=alb_name,
@@ -95,7 +98,7 @@ def ecs_create(
         stack_sufix=stack_suffix,
     )
 
-    print(
+    rich.print(
         f"ECS create with file: {file}, build: {build}, alb_name: {alb_name}, dry_run: {dry_run}"
     )
 
@@ -116,7 +119,7 @@ def ecs_describe_stack(
     """
     service = ECSService.from_path(file)
     stack_name = service.stack_name(suffix=stack_suffix)
-    print(f"Describe stack: {stack_name}")
+    rich.print(f"Describe stack: {stack_name}")
     stack_out = list_stack(stack_name)
     print_stack_outputs(stack_out, verbose)
 
@@ -126,7 +129,7 @@ def ecs_update(file: str = typer.Option(..., "--file", "-f", help="Path to the f
     """
     Update ECS command.
     """
-    print(f"No supported yet. Sorry.")
+    rich.print("No supported yet. Sorry.")
 
 
 alb_app = typer.Typer()
@@ -147,18 +150,17 @@ def alb_create(
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
 ):
-
     """
     Create ALB command.
     """
     service = ALBService.from_path(file)
     subnets = subnet_ids_for_vpc(service.vpc, unique_availability_zones=True)
 
-    print(f"Create ALB: {service.alb_name} for service: {service}")
-    print(f"Subnets available: {subnets}")
+    rich.print(f"Create ALB: {service.alb_name} for service: {service}")
+    rich.print(f"Subnets available: {subnets}")
 
     if not subnets or len(subnets) < 2:
-        print(
+        rich.print(
             "ALB requires at least 2 subnets in different availability zones for VPC:",
             service.vpc,
         )
@@ -171,7 +173,7 @@ def alb_create(
         stack_suffix=suffix,
         verbose=verbose,
     )
-    print(f"Stack response: {response}")
+    rich.print(f"Stack response: {response}")
 
 
 @alb_app.command("reuse")
@@ -185,7 +187,7 @@ def alb_reuse(
     """
     Reuse ALB command.
     """
-    print(f"ALB reuse with file: {file}, alb_name: {alb_name}, dry_run: {dry_run}")
+    rich.print(f"ALB reuse with file: {file}, alb_name: {alb_name}, dry_run: {dry_run}")
     service = ALBService.from_path(file)
     reuse_alb(
         alb_name=alb_name,
@@ -212,7 +214,7 @@ def alb_describe_stack(
     """
     service = ALBService.from_path(file)
     stack_name = service.stack_name(suffix=stack_suffix)
-    print(f"Describe stack: {stack_name}")
+    rich.print(f"Describe stack: {stack_name}")
     stack_out = list_stack(stack_name)
     print_stack_outputs(stack_out, verbose)
 
@@ -235,21 +237,17 @@ def parameters_create(
     """
     Create parameters command.
     """
-    from .parameters.create import (
-        create_parameters,
-        create_secret,
-        detect_secrets_with_ai,
-    )
-    from .parameters.env_handler import load_env_to_dict
 
-    print(f"Parameters create with file: {file}, env: {env} and secrets: {secrets}")
+    rich.print(
+        f"Parameters create with file: {file}, env: {env} and secrets: {secrets}"
+    )
 
     service = ECSService.from_path(file)
     evn_vars = load_env_to_dict(env)
 
     if not secrets or secrets is None:
         secret_vars = detect_secrets_with_ai(evn_vars)
-        print(f"Auto secrets: {secret_vars}")
+        rich.print(f"Auto secrets: {secret_vars}")
     else:
         secret_vars = {
             secret: f"{evn_vars[secret]}" for secret in secrets if secret in evn_vars
@@ -261,30 +259,29 @@ def parameters_create(
     not_secret_vars = {var: evn_vars[var] for var in evn_vars if var not in secret_vars}
 
     if verbose:
-        print(f"Storing secrets: {secret_vars.keys()}")
-        print(f"Storing non-secrets: {not_secret_vars.keys()}")
+        rich.print(f"Storing secrets: {secret_vars.keys()}")
+        rich.print(f"Storing non-secrets: {not_secret_vars.keys()}")
 
     all_var_values = {**secret_vars, **not_secret_vars}
 
-    if not any(
-        [str(service.container_port) in f"{x}" for x in all_var_values.values()]
-    ):
-        print(
-            f"Container port: {service.container_port} not found in any environment variables. Please add it to the `.env` file."
+    if not any(str(service.container_port) in f"{x}" for x in all_var_values.values()):
+        rich.print(
+            f"Container port: {service.container_port} not found in any environment "
+            "variables. Please add it to the `.env` file."
         )
         raise typer.Exit(code=1)
 
     if secret_vars:
         secret_return = create_secret(service=service, service_variables=secret_vars)
         if verbose:
-            print(f"Secret return: {secret_return}")
+            rich.print(f"Secret return: {secret_return}")
 
     if not_secret_vars:
         param_return = create_parameters(
             service=service, service_variables=not_secret_vars
         )
         if verbose:
-            print(f"Parameters return: {param_return}")
+            rich.print(f"Parameters return: {param_return}")
 
 
 @params_app.command("list")
@@ -295,18 +292,16 @@ def parameters_list(
     """
     Create parameters command.
     """
-    from .parameters.env_handler import load_env_to_dict
-    from .parameters.list import list_parameters, list_secrets
 
     service = Service.from_path(file)
 
-    print(f"Listing parameters for service: {service}")
+    rich.print(f"Listing parameters for service: {service}")
 
     param_keys = list_parameters(service=service)
     secret_keys = list_secrets(service=service, show_values=show_values)
 
-    print(f"Parameters: {param_keys}")
-    print(f"Secrets: {secret_keys}")
+    rich.print(f"Parameters: {param_keys}")
+    rich.print(f"Secrets: {secret_keys}")
 
 
 workflow_app = typer.Typer()
@@ -333,29 +328,7 @@ def workflow_create(
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
 ):
-
-    print("This option is not implemented yet. Sorry :(")
-    exit(1)
-    """
-    Create ALB command.
-    """
-    from .workflow.controller import update_github_action_workflow
-
-    service = ECSService.from_path(file)
-
-    if not output_file:
-        # add org to the workflow_file name as fileprefix
-        output_file = Path(workflow_file.parent / f"{org}_{workflow_file.name}")
-
-    ret = update_github_action_workflow(
-        org=org,
-        service=service,
-        input_file_name=workflow_file,
-        output_file_name=output_file,
-        # dry_run=dry_run,
-        # verbose=verbose,
-    )
-    print(ret)
+    raise NotImplementedError("This option is not implemented yet. Sorry :(")
 
 
 if __name__ == "__main__":

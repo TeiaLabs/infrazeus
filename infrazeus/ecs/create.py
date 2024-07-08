@@ -1,11 +1,12 @@
+import sys
 from enum import Enum
 from typing import Any, Literal, Optional
 
 import boto3
+import rich
 from loguru import logger
-from rich import print
 
-from infrazeus.aws.helper import create_stack, list_stack
+from infrazeus.aws.helper import create_stack
 
 from ..alb.controller import get_alb_resources
 from ..alb.helper import get_load_balancer_subnet_ids
@@ -55,9 +56,9 @@ def main_create_ens(
                     "or reuse an existing one by informing `--alb_name`"
                 )
             )
-            exit(1)
+            sys.exit(1)
         if verbose:
-            print("ALB stack outputs:", alb_stack_outputs)
+            rich.print("ALB stack outputs:", alb_stack_outputs)
 
         alb_resources = alb_stack_outputs["Stacks"][0]["Outputs"]
         alb_resources = {
@@ -85,9 +86,9 @@ def main_create_ens(
     logger.debug(f"Load Balancer ARN: {load_balancer_arn}")
 
     if verbose:
-        print(target_group_arn)
-        print(security_group_id)
-        print(load_balancer_arn)
+        rich.print(target_group_arn)
+        rich.print(security_group_id)
+        rich.print(load_balancer_arn)
 
     cf_client = boto3.client("cloudformation")
 
@@ -123,7 +124,7 @@ def main_create_ens(
         task_definition_arn = list_task_definition_by_name(service.canonical_name)
         if not task_definition_arn:
             logger.error(f"Could not find task definition for {service.canonical_name}")
-            exit()
+            sys.exit()
 
         template_head["Parameters"]["ECSTaskDefinition"] = {
             "Type": "String",
@@ -147,8 +148,8 @@ def main_create_ens(
     else:
         raise ValueError(f"Invalid build type: {build}")
 
-    print("\nCloudform template:")
-    print(template_head)
+    rich.print("\nCloudform template:")
+    rich.print(template_head)
 
     if dry_run:
         return {}

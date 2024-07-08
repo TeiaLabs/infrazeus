@@ -3,7 +3,7 @@ from typing import Any, Optional
 from ..schema import ECSService
 
 
-#%%
+# %%
 # Define the CloudFormation template
 def get_template_head(
     service: ECSService,
@@ -116,7 +116,10 @@ def get_task_definition_template(
         container_definitions["Secrets"] = [
             {
                 "Name": key,
-                "ValueFrom": f"arn:aws:secretsmanager:{service.region}:{service.account_id}:secret:{service.canonical_name}:{key}::",
+                "ValueFrom": (
+                    f"arn:aws:secretsmanager:{service.region}:"
+                    f"{service.account_id}:secret:{service.canonical_name}:{key}::"
+                ),
             }
             for key in secrets.keys()
         ]

@@ -1,12 +1,12 @@
-import json
+import sys
 from typing import Optional
 
 import boto3
+import rich
 from botocore.exceptions import ClientError
 from loguru import logger
-from rich import print
 
-from ..aws.helper import create_stack, list_certificates, list_stack, list_subnets
+from ..aws.helper import create_stack, list_certificates
 from ..schema import ALBService
 from . import templates as t
 
@@ -87,7 +87,10 @@ def reuse_alb(
 
     template = {
         "AWSTemplateFormatVersion": "2010-09-09",
-        "Description": f"CloudFormation template for {service.normalized_name} based on existing {provided_alb_name} ALB",
+        "Description": (
+            f"CloudFormation template for {service.normalized_name} "
+            "based on existing {provided_alb_name} ALB"
+        ),
         "Resources": {},
         "Outputs": {},
     }
@@ -97,11 +100,11 @@ def reuse_alb(
     template["Outputs"].update(sg["Outputs"])
     template["Outputs"].update(tg["Outputs"])
 
-    print("Creation template:")
-    print(template)
+    rich.print("Creation template:")
+    rich.print(template)
 
     if dry_run:
-        exit()
+        sys.exit(0)
 
     stack_name = f"{service.service_name}-{service.environment}-alb-reuse-{provided_alb_name}-stack-1"
     response = create_stack(template, stack_name)
@@ -134,18 +137,21 @@ def create_alb(
     listen = t.get_listener_template(service=service, certificate_arn=cert_arn)
 
     if verbose:
-        print("Security Group")
-        print(sg)
-        print("Target Group")
-        print(tg)
-        print("Listener")
-        print(listen)
-        print("Subnets")
-        print(subnets)
+        rich.print("Security Group")
+        rich.print(sg)
+        rich.print("Target Group")
+        rich.print(tg)
+        rich.print("Listener")
+        rich.print(listen)
+        rich.print("Subnets")
+        rich.print(subnets)
 
     template = {
         "AWSTemplateFormatVersion": "2010-09-09",
-        "Description": f"CloudFormation template for {service.normalized_name} based on existing {provided_alb_name} ALB",
+        "Description": (
+            f"CloudFormation template for {service.normalized_name} "
+            f"based on existing {provided_alb_name} ALB"
+        ),
         "Resources": {},
         "Outputs": {},
     }
@@ -158,7 +164,7 @@ def create_alb(
     template["Outputs"].update(tg["Outputs"])
 
     if verbose:
-        print(template)
+        rich.print(template)
 
     stack_name = service.stack_name(stack_suffix)
 

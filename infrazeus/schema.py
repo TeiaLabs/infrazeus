@@ -59,7 +59,10 @@ class Service(BaseModel):
     def ecr_image_path(
         self,
     ) -> str:
-        return f"{self.account_id}.dkr.ecr.{self.region}.amazonaws.com/{self.ecr_name}:{self.docker_tag}"
+        return (
+            f"{self.account_id}.dkr.ecr.{self.region}.amazonaws.com"
+            f"/{self.ecr_name}:{self.docker_tag}"
+        )
 
 
 class ALBService(Service):
