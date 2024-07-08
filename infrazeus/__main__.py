@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import typer
 from pathlib import Path
 from rich import print
