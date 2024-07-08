@@ -1,5 +1,4 @@
 import json
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -53,7 +52,8 @@ class Service(BaseModel):
 
     @classmethod
     def from_path(cls, json_file_path: str | Path):
-        return cls(**json.load(open(json_file_path)))
+        with open(json_file_path, encoding="utf-8") as f:
+            return cls(**json.load(f))
 
     @property
     def ecr_image_path(

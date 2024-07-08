@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import boto3
 import rich
@@ -34,7 +34,8 @@ def list_ecr(
         for repo in page["repositories"]:
             repo_name = repo["repositoryName"]
 
-            # Filter logic: check if the name should contain a substring or be equal to a given string
+            # Filter logic: check if the name should contain a
+            # substring or be equal to a given string
             if name_contains and name_contains in repo_name:
                 repositories.append(repo)
             elif name_equals and name_equals == repo_name:
