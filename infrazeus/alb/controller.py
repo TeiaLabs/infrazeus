@@ -1,16 +1,14 @@
 import json
-import boto3
 from typing import Optional
+
+import boto3
 from botocore.exceptions import ClientError
-
-from ..aws.helper import list_subnets, list_certificates, create_stack, list_stack
-from ..schema import ALBService
-
-from rich import print
 from loguru import logger
+from rich import print
 
+from ..aws.helper import create_stack, list_certificates, list_stack, list_subnets
+from ..schema import ALBService
 from . import templates as t
-
 
 
 def get_alb_resources(alb_name):

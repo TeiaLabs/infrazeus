@@ -1,8 +1,7 @@
-from typing import Any
-import boto3
+from typing import Any, List
 
 import boto3
-from typing import List
+
 
 def list_subnets(
     ec2_client,

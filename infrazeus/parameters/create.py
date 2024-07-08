@@ -1,6 +1,8 @@
-import boto3
-import json 
+import json
 from typing import Any, Dict, Optional
+
+import boto3
+
 from ..schema import Service
 
 

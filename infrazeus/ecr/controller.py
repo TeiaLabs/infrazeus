@@ -1,7 +1,8 @@
+from typing import Any, Dict, List, Optional
+
 import boto3
-from rich import print
-from typing import Optional, Any, Dict, List
 from loguru import logger
+from rich import print
 
 from ..schema import Service
 

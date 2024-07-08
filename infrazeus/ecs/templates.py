@@ -1,5 +1,6 @@
-from ..schema import ECSService
 from typing import Any, Optional
+
+from ..schema import ECSService
 
 
 #%%

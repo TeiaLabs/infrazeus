@@ -1,16 +1,15 @@
-import typer
 from pathlib import Path
-from rich import print
-from loguru import logger
 
-from .alb.controller import reuse_alb, create_alb
-from .aws.helper import subnet_ids_for_vpc, list_stack
+import typer
+from loguru import logger
+from rich import print
+
+from .alb.controller import create_alb, reuse_alb
+from .aws.helper import list_stack, subnet_ids_for_vpc
 from .cli_out import lightning_decorator, print_stack_outputs
 from .ecr.controller import create_ecr, list_ecr
 from .ecs.create import ECSBuilds
-from .schema import Service, ALBService, ECSService
-
-
+from .schema import ALBService, ECSService, Service
 
 logger.level("INFO")
 
@@ -193,7 +192,11 @@ def parameters_create(
     """
     Create parameters command.
     """
-    from .parameters.create import create_parameters, create_secret, detect_secrets_with_ai
+    from .parameters.create import (
+        create_parameters,
+        create_secret,
+        detect_secrets_with_ai,
+    )
     from .parameters.env_handler import load_env_to_dict
 
     print(f"Parameters create with file: {file}, env: {env} and secrets: {secrets}")
@@ -247,8 +250,8 @@ def parameters_list(
     """
     Create parameters command.
     """
-    from .parameters.list import list_parameters, list_secrets
     from .parameters.env_handler import load_env_to_dict
+    from .parameters.list import list_parameters, list_secrets
 
     service = Service.from_path(file)
 

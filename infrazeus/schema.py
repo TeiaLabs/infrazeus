@@ -1,9 +1,10 @@
+import json
 from dataclasses import dataclass
-from typing import Literal, Optional
-import json 
 from pathlib import Path
-from pydantic import BaseModel, Field
+from typing import Literal, Optional
+
 import boto3
+from pydantic import BaseModel, Field
 
 
 def get_account_id():
