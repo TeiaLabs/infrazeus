@@ -16,14 +16,14 @@ It supports:
 
 ### Set Up InfraZeus
 
-Install Infrazeus:
+1. Install Infrazeus:
 
 ```bash
 git clone git@github.com:TeiaLabs/infrazeus.git
 cd infrazeus
 pip install .
 ```
-
+2. Setup your aws credentials. More info [here](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#configuration).
 
 ### TLDR
 
