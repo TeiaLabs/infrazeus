@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 def get_account_id():
     # Assuming you have the AWS credentials configured in your environment or config file
-    sts_client = boto3.client('sts')
+    sts_client = boto3.client("sts")
     account_id = sts_client.get_caller_identity()["Account"]
     return account_id
 
@@ -34,11 +34,11 @@ class Service(BaseModel):
     @property
     def canonical_name(self) -> str:
         return f"{self.normalized_name}-{self.environment}"
-    
+
     @property
     def ecr_name(self) -> str:
         return self.canonical_name
-    
+
     @property
     def sg_name(self) -> str:
         return f"{self.canonical_name}-sg"
@@ -46,7 +46,7 @@ class Service(BaseModel):
     @property
     def alb_name(self) -> str:
         return f"{self.canonical_name}-alb"
-    
+
     @property
     def target_group_name(self) -> str:
         return f"{self.canonical_name}-tg"
@@ -54,7 +54,7 @@ class Service(BaseModel):
     @classmethod
     def from_path(cls, json_file_path: str | Path):
         return cls(**json.load(open(json_file_path)))
-    
+
     @property
     def ecr_image_path(
         self,
@@ -71,9 +71,9 @@ class ALBService(Service):
     protocol: Literal["HTTP", "HTTPS"]
 
     def stack_name(self, suffix: Optional[str]) -> str:
-        name = f'{self.canonical_name}-alb-stack'
+        name = f"{self.canonical_name}-alb-stack"
         if suffix:
-            name = f'{name}-{suffix}'
+            name = f"{name}-{suffix}"
         return name
 
 
@@ -83,7 +83,7 @@ class ECSService(ALBService):
     cpu: int
 
     def stack_name(self, suffix: Optional[str]) -> str:
-        name = f'{self.canonical_name}-ecs-stack'
+        name = f"{self.canonical_name}-ecs-stack"
         if suffix:
-            name = f'{name}-{suffix}'
+            name = f"{name}-{suffix}"
         return name
